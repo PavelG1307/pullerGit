@@ -10,10 +10,10 @@ def connect_db():
     cursor = connection.cursor()
 
 
-def start_server():
+def start_server(host='127.0.0.1', port=8080):
     global server
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('127.0.0.1', 8080))
+    server.bind((host, port))
     server.listen(4)
     print('Working...')
 
