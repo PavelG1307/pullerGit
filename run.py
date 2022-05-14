@@ -1,14 +1,17 @@
-import random
+from hashids import Hashids
 import socket
 import sqlite3
-import string
 
 
 def connect_db():
-    global connection, cursor
+    global connection, cursor, hashid
     connection = sqlite3.connect('database.db')
     cursor = connection.cursor()
-
+    cursor.execute(
+        '''CREATE TABLE IF NOT EXISTS "Url_and_key" ("url"	TEXT UNIQUE)'''
+        )
+    connection.commit()
+    hashid = Hashids(salt="this is my salt", min_length=8)
 
 def start_server(host='127.0.0.1', port=8080):
     global server
@@ -27,49 +30,24 @@ def response_text(content='', status=200):
         return f'HTTP/1.1 404 Not Found'.encode('utf-8')
 
 
-def check_url(url):
-    cursor.execute(f"SELECT key FROM Url_and_key WHERE url LIKE '{url}';")
-    result = cursor.fetchall()
-    if result == []:
-        return None
-    return result[0][0]
-
-
-def check_key(key):
-    cursor.execute(f"SELECT COUNT(*) FROM Url_and_key WHERE key LIKE '{key}';")
-    if cursor.fetchall()[0][0] == 0:
-        return True
-    return False
-
-
 def add_url(url):
-    key = check_url(url)
-    if key is None:
-        key = generate_key()
-        cursor.execute(f"INSERT INTO Url_and_key ('key', 'url') VALUES ('{key}', '{url}');")
-        connection.commit()
+    cursor.execute(f'''INSERT or IGNORE INTO Url_and_key ('url') VALUES ('{url}');''')
+    connection.commit()
+    cursor.execute(f'''SELECT rowid FROM Url_and_key WHERE url LIKE '{url}';''')
+    id = cursor.fetchone()[0]
+    key = hashid.encode(id)
     return key
 
 
 def get_url(key):
-    cursor.execute(f"SELECT url FROM Url_and_key WHERE key LIKE '{key}';")
-    url = cursor.fetchall()
-    if url != []:
-        return url[0][0]
-    return None
-
-
-def generate_key():
-    dictionary = list(string.ascii_lowercase + string.ascii_uppercase) + ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    key = ''
-    for i in range(8):
-        key += random.choice(dictionary)
-    if check_key(key):
-        return(key)
+    id = hashid.decode(key)
+    if id == ():
+        return None
     else:
-        generate_key()
-        # По хорошему надо сделать ограничение от случая, когда будут заняты все ключи
-        # Но вероятность такой ситуации в наших масштабах около нуля
+        id = id[0]
+    cursor.execute(f"SELECT url FROM Url_and_key WHERE rowid = {id};")
+    url = cursor.fetchone()
+    return url
 
 
 def parse_request(request_data):
@@ -85,7 +63,7 @@ def parse_request(request_data):
         key = data.split('/s/')[1]
         url = get_url(key)
         if url is not None:
-            return url, 302
+            return url[0], 302
     return '', 404
 
 
@@ -102,9 +80,5 @@ def main():
     while(True):
         handl()
 
-
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
+if __name__=='__main__':
+    main()
