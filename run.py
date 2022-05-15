@@ -1,17 +1,18 @@
 from hashids import Hashids
 import socket
 import sqlite3
+from cache import Cache_URL
 
 
 def connect_db():
-    global connection, cursor, hashid
+    global connection, cursor
     connection = sqlite3.connect('database.db')
     cursor = connection.cursor()
     cursor.execute(
         '''CREATE TABLE IF NOT EXISTS "Url_and_key" ("url"	TEXT UNIQUE)'''
         )
     connection.commit()
-    hashid = Hashids(salt="this is my salt", min_length=8)
+
 
 def start_server(host='127.0.0.1', port=8080):
     global server
@@ -40,13 +41,18 @@ def add_url(url):
 
 
 def get_url(key):
+    url = cache.get_url(key)
+    if url is not None:
+        return url
     id = hashid.decode(key)
     if id == ():
         return None
     else:
         id = id[0]
+    print('req')
     cursor.execute(f"SELECT url FROM Url_and_key WHERE rowid = {id};")
     url = cursor.fetchone()
+    cache.save(key=key, url=url)
     return url
 
 
@@ -75,10 +81,17 @@ def handl():
 
 
 def main():
+    global cache, hashid
+    hashid = Hashids(salt="this is my salt", min_length=8)
+    cache = Cache_URL(max_lenght=50)
     connect_db()
     start_server()
     while(True):
         handl()
 
+
 if __name__=='__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        connection.close()
