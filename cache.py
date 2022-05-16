@@ -1,9 +1,9 @@
 class Cache_URL(object):
 
-
     key = []
     url = []
     max_lenght = 10
+
 
     def __init__(self, max_lenght = 10):
         self.max_lenght = max_lenght

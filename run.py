@@ -32,10 +32,13 @@ def response_text(content='', status=200):
 
 
 def add_url(url):
-    cursor.execute(f'''INSERT or IGNORE INTO Url_and_key ('url') VALUES ('{url}');''')
-    connection.commit()
-    cursor.execute(f'''SELECT rowid FROM Url_and_key WHERE url LIKE '{url}';''')
-    id = cursor.fetchone()[0]
+    try:
+        cursor.execute(f'''INSERT INTO Url_and_key ('url') VALUES ('{url}');''')
+        id = cursor.lastrowid
+        connection.commit()
+    except sqlite3.IntegrityError:
+        cursor.execute(f'''SELECT rowid FROM Url_and_key WHERE url LIKE '{url}';''')
+        id = cursor.fetchone()[0]
     key = hashid.encode(id)
     return key
 
