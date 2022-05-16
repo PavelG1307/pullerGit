@@ -86,7 +86,7 @@ def handl():
 def main():
     global cache, hashid
     hashid = Hashids(salt="this is my salt", min_length=8)
-    cache = Cache_URL(max_lenght=50)
+    cache = Cache_URL(max_lenght=500)
     connect_db()
     start_server()
     while(True):
