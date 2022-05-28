@@ -1,7 +1,10 @@
+from logging import exception
+from pydoc import pager
 from hashids import Hashids
 import socket
 import sqlite3
 from cache import Cache_URL
+from urllib.parse import unquote
 
 
 def connect_db():
@@ -52,42 +55,57 @@ def get_url(key):
         return None
     else:
         id = id[0]
-    print('req')
     cursor.execute(f"SELECT url FROM Url_and_key WHERE rowid = {id};")
     url = cursor.fetchone()
     cache.save(key=key, url=url)
     return url
 
 
-def parse_request(request_data):
+def get_url_page(key, domain):
+    h = page_url.find('"#"') + 1
+    k = h+3
+    d = page_url.find('"home"') + 1
+    url = f'http://{domain}/s/{key}'
+    page = page_url[:h] + url + page_url[h+1:k] + url + page_url[k:d] + f'http://{domain}/' + page_url[d+4:]
+    return page
+
+
+def parse_request(request_data, domain = "127.0.0.1:8080"):
+    global page
     try:
         data = request_data.split(' ')[1]
     except Exception:
         return '', 404
-    if data[1] == 'a':
-        url = data.split('/a/?url=')[1]
+    if data == '/':
+        return page, 200
+    if data[:6] == '/?url=':
+        url = data.split('?url=')[1]
         key = add_url(url)
-        return key, 200
-    elif data[1] == 's':
+        return get_url_page(key, domain), 200
+    elif data[:3] == '/s/':
         key = data.split('/s/')[1]
         url = get_url(key)
         if url is not None:
-            return url[0], 302
+            return unquote(unquote(url[0])), 302
     return '', 404
 
 
 def handl():
     client_socket, address = server.accept()
+    print(address)
     data = client_socket.recv(1024).decode('utf-8')
     content, status = parse_request(data)
     client_socket.send(response_text(content=content, status=status))
 
 
 def main():
-    global cache, hashid
+    global cache, hashid, page, page_url
+    page = open('index.html', mode = 'r').read()
+    page_url = open('url.html', mode = 'r').read()
     hashid = Hashids(salt="this is my salt", min_length=8)
-    cache = Cache_URL(max_lenght=500)
+    cache = Cache_URL(max_lenght=50)
     connect_db()
+    add_url('urland')
     start_server()
     while(True):
         handl()
@@ -98,3 +116,4 @@ if __name__=='__main__':
         main()
     except KeyboardInterrupt:
         connection.close()
+        server.close()

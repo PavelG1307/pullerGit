@@ -1,0 +1,46 @@
+<html>
+    <head>
+        <title>Сжать ссылку</title>
+        <!-- <link rel='stylesheet' href="{% static 'style.css' %}"> -->
+        <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <style type="text/css">
+            .parent {
+                padding: 70px;
+                background: rgb(255, 249, 168);
+                position: fixed; top: 50%; left: 50%;
+                -webkit-transform: translate(-50%, -50%);
+                -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+            }
+            .text {
+                text-align: center;
+                position: absolute;
+                left: 50%;
+                top: 10%;
+                transform: translate(-50%, -50%);
+            }
+            .textin {
+                text-align: center;
+            }
+            .url {
+                text-align: center;
+            }
+            .button{
+                position: absolute;
+                left: 50%;
+                bottom: 10%;
+                transform: translate(-50%, -50%);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="parent">
+            <form>
+                <p class = "text">Сократить ссылку:</p>
+                <p><input class = "textin" type = "text" name="url"></p>
+                <p><input class = "button" type="submit" value="Сократить"></p>
+            </form>
+            <p class = "url"></p>
+        </div>
+    </body>
+</html>
