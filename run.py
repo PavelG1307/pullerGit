@@ -3,7 +3,8 @@ import time
 import os
 
 proccess = 0
-command = f'git pull && pm2 restart {proccess}'
+pullServer = f'git -C ../fifth_floor_server pull && cd ../fifth_floor_server && pm2 restart {proccess} && cd ../pullerGit'
+pullSite = f'git -C ../fifth_floor pull'
 last_update = 0
 
 def start_server(host='127.0.0.1', port=8000):
@@ -22,9 +23,10 @@ def response_text(content='', status=200):
   elif status == 404:
     return f'HTTP/1.1 404 Not Found'.encode('utf-8')
 
-def pull():
+def pull(server):
   global last_update
   last_update = time.time()
+  command = pullServer if server else pullSite
   return os.system(command)
 
 def getpull():
@@ -36,7 +38,9 @@ def parse_request(request_data, domain = "127.0.0.1:8080"):
     if method == 'GET':
       return getpull(), 200
     elif method == 'POST':
-      return pull(), 200
+      return pull(True), 200
+    elif method == 'PUT':
+      return pull(False), 200
   except Exception:
     return '', 404
 
