@@ -3,7 +3,7 @@ import time
 import os
 
 proccess = 0
-pullServer = f'git -C ../fifth_floor_server pull && cd ../fifth_floor_server && pm2 restart {proccess} && cd ../pullerGit'
+pullServer = f'git -C ../fifth_floor_server pull --no-edit && cd ../fifth_floor_server && pm2 restart {proccess} && cd ../pullerGit'
 pullSite = f'git -C ../fifth_floor pull'
 last_update = 0
 
